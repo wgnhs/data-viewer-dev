@@ -887,7 +887,7 @@
               ]
             },
             "CompYear": {
-              title: 'Comp Year',
+              title: 'Completed Year',
               controls: [
                 new GTLTControl(true)
               ]

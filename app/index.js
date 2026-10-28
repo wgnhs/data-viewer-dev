@@ -808,7 +808,7 @@
         }
       }]
     }),
-    /*new FilterGroup({
+    new FilterGroup({
       title: "Cuttings data",
       prop: 'Data_Type',
       'Data_Type': 'cuttings',
@@ -904,7 +904,7 @@
           }
         }
       ]
-    })*/
+    })
   ];
 
   const RestylingCircleMarker = L.CircleMarker.extend({

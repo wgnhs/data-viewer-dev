@@ -951,7 +951,7 @@
     }
   });
 
-  RestylingCircleMarker.calcRadius = (a) => Math.max(Math.floor(a/1.5),3);
+  RestylingCircleMarker.calcRadius = (a) => Math.max(Math.floor(a/2),3);
 
   class SiteMap extends window.L.Evented {
     constructor() {
@@ -1018,6 +1018,7 @@
               pointToLayer: function(geoJsonPoint, latlon) {
                 return new RestylingCircleMarker(latlon, {
                   weight: 2,
+                  fillOpacity: .2,
                   color: res.color,
                   radius: RestylingCircleMarker.calcRadius(map.getZoom()),
                   stroke: false,

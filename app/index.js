@@ -456,7 +456,7 @@
       ]
     }),
     new FilterGroup({
-      title: "Geophysical Log data",
+      title: "Geophysical Logs",
       prop: 'Data_Type',
       'Data_Type': 'geophysical log',
       source: {
@@ -482,13 +482,13 @@
               hidden: true
             },
             "RecentLog": {
-              title: 'Most recent log (year)',
+              title: 'Most Recent Log (year)',
               controls: [
                 new GTLTControl(true)
               ]
             },
             "MaxDepth": {
-              title: 'Max depth (ft)',
+              title: 'Maximum Depth (feet)',
               controls: [
                 new GTLTControl()
               ]
@@ -608,7 +608,7 @@
       ]
     }),
     new FilterGroup({
-      title: "Quaternary Core data",
+      title: "Quaternary Core",
       prop: 'Data_Type',
       'Data_Type': 'quaternary core',
       source: {
@@ -634,13 +634,13 @@
               hidden: true
             },
             "CompYear": {
-              title: 'Completed year',
+              title: 'Completed Year',
               controls: [
                 new GTLTControl(true)
               ]
             },
             "ElevationFt": {
-              title: 'Elevation (ft)'
+              title: 'Elevation (feet)'
             },
             "Project": {
               title: 'Project',
@@ -649,7 +649,7 @@
               ]
             },
             "DepthFt": {
-              title: 'Depth (ft)',
+              title: 'Depth (feet)',
               controls: [
                 new GTLTControl()
               ]
@@ -673,19 +673,19 @@
               ]
             },
             "Photos": {
-              title: 'Core Photos',
+              title: 'Core Images',
               controls: [
                 new CheckboxControl()
               ]
             },
             "Grainsize": {
-              title: 'Grainsize',
+              title: 'Grainsize Data',
               controls: [
                 new CheckboxControl()
               ]
             },
             "Age_Data": {
-              title: 'Age data',
+              title: 'Geochronology',
               controls: [
                 new CheckboxControl()
               ]
@@ -703,7 +703,7 @@
       ]
     }),
     new FilterGroup({
-      title: "Rock Core data",
+      title: "Bedrock Core",
       prop: 'Data_Type',
       'Data_Type': 'rock core',
       source: {
@@ -740,18 +740,18 @@
             ]
           },
           "Elevation": {
-            title: 'Elevation (ft)',
+            title: 'Elevation (feet)',
           },
           "ElevMeth": {
             title: 'Elevation Method'
           },
           // "ElevAcc": {
-          //   title: 'Elevation Accuracy (ft)'
+          //   title: 'Elevation Accuracy (feet)'
           // },
           // "SiteDate": {},
           // "LocConf": {},
           "CoreTop": {
-            title: 'Top of Core Depth (ft)'
+            title: 'Top of Core Depth (feet)'
           },
           // "TopStratCode": {},
           "TopStratName": {
@@ -761,7 +761,7 @@
             ]
           },
           "CoreBot": {
-            title: 'Bottom of Core Depth (ft)'
+            title: 'Bottom of Core Depth (feet)'
           },
           // "BotStratCode": {},
           "BotStratName": {
@@ -772,7 +772,7 @@
           },
           
           "CoreLen": {
-            title: 'Length of Core (ft)'
+            title: 'Length of Core (feet)'
           },
           "BoxCount": {
             title: 'Box Count'
@@ -812,7 +812,7 @@
       }]
     }),
     new FilterGroup({
-      title: "Cuttings data",
+      title: "Cuttings Samples",
       prop: 'Data_Type',
       'Data_Type': 'cuttings',
       source: {
@@ -838,13 +838,13 @@
               hidden: true
             },
             "Drill_Year": {
-              title: 'Drill year',
+              title: 'Drill Year',
               controls: [
                 new GTLTControl(true)
               ]
             },
             "Depth_Ft": {
-              title: 'Depth (ft)',
+              title: 'Total Depth (feet)',
               controls: [
                 new GTLTControl()
               ]
@@ -858,7 +858,7 @@
       ]
     }),
     new FilterGroup({
-      title: "Thin Sections data",
+      title: "Petrographic thin sections",
       prop: 'Data_Type',
       'Data_Type': 'thin sections',
       source: {
@@ -884,19 +884,19 @@
               hidden: true
             },
             "SiteType": {
-              title: 'Site Type',
+              title: 'Locality',
               controls: [
                 new SelectControl()
               ]
             },
             "CompYear": {
-              title: 'Completed Year',
+              title: 'Collection Year',
               controls: [
                 new GTLTControl(true)
               ]
             },
             "Elevation": {
-              title: 'Elevation (ft)',
+              title: 'Elevation (feet)',
             },
               "SlideCount": {
               title: 'Slide Count'
@@ -1969,6 +1969,7 @@
       .section-title {
         margin: var(--line-height) 0 0 0;
         padding: var(--border-radius);
+        margin: var(--border-radius) 0;
         background-color: var(--palette-light);
       }
 

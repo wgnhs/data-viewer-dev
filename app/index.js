@@ -11,10 +11,13 @@
         this.id = wgnhsCommon.genId();
       }
     }
+    //Fires on show/hide group toggle
     activate(context) {
+      //console.log("Activate");
+      //console.log(context);
       let result = null;
       const input = context.detail.checked;
-      if (context.toggleable && input) {
+      if (input) {
         result = {
           id: context.id,
           context,
@@ -366,9 +369,7 @@
     static getFieldTitle(key, layoutName) {
       let result = key;
       let config = SiteData.getFieldConfiguration(key, layoutName);
-      if (!config) {
-        result += '*';
-      } else if (config.title) {
+      if (config && config.title) {
         result = config.title;
       }
       return result;
@@ -389,20 +390,22 @@
       if (!config || config.hidden) {
         result = true;
       }
+      console.log("Get field hidden");
+      console.log(key);
+      console.log(result);
       return result;
     }
   }
 
-  const ignoredKeys = [
-    'Site_Code',
-    'Data_Type',
-    'Site_Name'
-  ];
-
   const filterLookup = [
     new FilterGroup({
       title: "Site Information",
+      prop: 'Data_Type',
+      'Data_Type': 'site information',
       open: true,
+      color: 'var(--map-symbol-0)',
+      toggleable: false,
+      active: true,
       sections: [
         {
           fields: {
@@ -612,7 +615,7 @@
         geojson: 'https://data.wgnhs.wisc.edu/arcgis/rest/services/geologic_data/quaternary_core/MapServer/0/query?where=1%3D1&inSR=4326&outFields=*&returnGeometry=true&geometryPrecision=6&outSR=4326&f=geojson',
         user: 'https://data.wgnhs.wisc.edu/arcgis/rest/services/geologic_data/quaternary_core/MapServer/0'
       },
-      color: 'var(--map-symbol-1)',
+      color: 'var(--map-symbol-0)',
       toggleable: true,
       active: true,
       sections: [
@@ -707,7 +710,7 @@
         geojson: 'https://data.wgnhs.wisc.edu/arcgis/rest/services/geologic_data/rock_core/MapServer/0/query?where=LonDD+is+not+null&inSR=4326&outFields=*&returnGeometry=true&geometryPrecision=6&outSR=4326&f=geojson',
         user: 'https://data.wgnhs.wisc.edu/arcgis/rest/services/geologic_data/rock_core/MapServer/0'
       },
-      color: 'var(--map-symbol-2)',
+      color: 'var(--map-symbol-0)',
       toggleable: true,
       active: true,
       sections: [{
@@ -816,9 +819,9 @@
         geojson: 'https://data.wgnhs.wisc.edu/arcgis/rest/services/geologic_data/cuttings_samples/MapServer/0/query?where=1%3D1&inSR=4326&outFields=*&returnGeometry=true&geometryPrecision=6&outSR=4326&f=geojson',
         user: 'https://data.wgnhs.wisc.edu/arcgis/rest/services/geologic_data/cuttings_samples/MapServer/0'
       },
-      color: 'var(--map-symbol-3)',
+      color: 'var(--map-symbol-0)',
       toggleable: true,
-      active: true,
+      active: false,
       sections: [
         {
           fields: {
@@ -862,7 +865,7 @@
         geojson: 'https://data.wgnhs.wisc.edu/arcgis/rest/services/geologic_data/thin_sections/MapServer/0/query?where=1%3D1&inSR=4326&outFields=*&returnGeometry=true&geometryPrecision=6&outSR=4326&f=geojson',
         user: 'https://data.wgnhs.wisc.edu/arcgis/rest/services/geologic_data/thin_sections/MapServer/0'
       },
-      color: 'var(--map-symbol-4)',
+      color: 'var(--map-symbol-0)',
       toggleable: true,
       active: true,
       sections: [
@@ -971,18 +974,6 @@
 
        
       /* ~~~~~~~~ Basemap Layers ~~~~~~~~ */
-       
-      // // basemaps from Open Street Map
-      // const osmhot = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-      //   attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors', 
-      //   label: "OpenStreetMap Humanitarian"
-      // });
-
-      // // CARTO Positron
-      // const positron = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
-      //   attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      //   label: 'CARTO Positron'
-      // });
 
       // Esri basemaps 
       const esristreets = L.esri.basemapLayer('Streets', {label: "Esri Streets"});
@@ -999,6 +990,8 @@
       })); 
 
       let sources = filterLookup.reduceRight((result, curr) => {
+        //console.log("sources filterLookup");
+        //console.log(curr.source);
         if (curr.source && curr.source.geojson) {
           result.push(
             window.fetch(curr.source.geojson)
@@ -1011,8 +1004,35 @@
         return result;
       }, []);
 
+      // data retrieved from arc map server here
       Promise.all(sources).then((responses) => {
-          this.layers = responses.map((res) => {
+        console.log("Responses");
+        console.log(responses);
+        this.uniqueWidsByLayer = SiteMap.getUniqueWidsByLayer(responses);
+        var combinedData = SiteMap.filterCombineResponses(responses);
+
+        this.layers = [];
+        this.layers.push(L.geoJSON(combinedData, {
+              name: 'site information',
+              pointToLayer: function(geoJsonPoint, latlon) {
+                return new RestylingCircleMarker(latlon, {
+                  weight: 2,
+                  color: 'var(--map-symbol-0)',
+                  radius: RestylingCircleMarker.calcRadius(map.getZoom()),
+                  stroke: false,
+                  fill: false,
+                });
+              }
+            }));
+          this.layers.push(...responses.map((res) => {
+            //console.log("Getting data");
+            console.log(res.name);
+            console.log(res.data);
+
+            // create 1 geoJson dataset with coords, county, WID, name
+
+            // create map layer from that dataset
+
             return L.geoJSON(res.data, {
               name: res.name,
               pointToLayer: function(geoJsonPoint, latlon) {
@@ -1026,7 +1046,9 @@
                 });
               }
             });
-          });
+          }));
+          console.log(this.layers);
+
           this.layers.forEach(l => l.on('click', (e) => {
             if (this._highlight !== e.propagatedFrom) {
               this.fire('interaction', e.propagatedFrom.feature.properties);
@@ -1034,8 +1056,9 @@
               this.fire('interaction');
             }
           }));
-          this.layers.forEach(l => l.addTo(map));
+          this.layers[0].addTo(map);
         let lookup = {};
+        console.log(this.layers.length);
         this.layers.forEach(function(layer, idx, arr) {
           layer.eachLayer(function(obj) {
             let wid = obj.feature.properties['Wid'] || obj.feature.properties['WID'] || obj.feature.properties['WGNHS_ID'];
@@ -1049,16 +1072,21 @@
               'Latitude': latLon['lat'].toFixed(6),
               'Longitude': latLon['lng'].toFixed(6),
               point: obj,
-              datas: new Array(arr.length)
+              datas: []
             };
             obj.feature.properties['Site_Code'] = siteCode;
             obj.feature.properties['Site_Name'] = siteName;
             obj.feature.properties['Data_Type'] = layer.options.name;
-
-            cache.datas[idx] = obj.feature.properties;
+            // some WIDs have multiple records per layer
+            // this code only gets the last one in each layer
+            cache.datas.push(obj.feature.properties);
             lookup[siteCode] = cache;
+            
           });
         });
+        for (const [k, v] of Object.entries(lookup)) {
+          if (v['datas'].length > 2) ;
+        }
         this._lookup = lookup;
         this.fire('init');
       });
@@ -1076,10 +1104,132 @@
       return result;
     }
 
+    static getUniqueWidsByLayer (responses) {
+        var uniqueWidsLayers = [];
+
+        responses.map((res) => {
+            let allWidsInLayer = [];
+            let uniqueWidsInLayer = [];
+            let dupWidsInLayer = {};
+            res.data.features.forEach(f => {
+              let wid = f.properties['Wid'] ?? f.properties['WID'] ?? f.properties['WGNHS_ID'] ?? undefined;
+              allWidsInLayer.push(wid);
+              if (!uniqueWidsInLayer.includes(wid)){
+                  uniqueWidsInLayer.push(wid);
+              } else {
+                dupWidsInLayer[wid] = allWidsInLayer.filter(w => w ===  wid).length;
+              }
+          });
+          console.log(res.name);
+          console.log("All WIDs in layer");
+          console.log(allWidsInLayer);
+          console.log("Unique WIDs in layer");
+          console.log(uniqueWidsInLayer);
+          console.log("Duplicate WIDs in layer");
+          console.log(dupWidsInLayer);
+          uniqueWidsLayers[res.name] = uniqueWidsInLayer;
+        });
+        console.log("Unique WIDs by layer");
+        console.log(uniqueWidsLayers);
+        return uniqueWidsLayers;
+      }
+
+    static filterCombineResponses (responses) {
+        var combinedData = {
+          type: "FeatureCollection",
+          features: []
+        };
+        var uniqueWids = [];
+        var uniqueWidsLayers = [];
+        var missingCounty = {};
+        var missingWid = {};
+
+        responses.map((res) => {
+            let allWidsInLayer = [];
+            let uniqueWidsInLayer = [];
+            let dupWidsInLayer = {};
+            missingCounty[res.name] = [];
+            missingWid[res.name] = [];
+            res.data.features.forEach(f => {
+              let wid = f.properties['Wid'] ?? f.properties['WID'] ?? f.properties['WGNHS_ID'] ?? undefined;
+              if (!wid) {
+                missingWid[res.name].push(f);
+              }
+              let county = f.properties['County'] || f.properties['CountyName'];
+              if (!county) {
+                missingCounty[res.name].push(f);
+              }
+              let siteName = f.properties['Site_name'] || f.properties['SiteName'];
+              if (!uniqueWids.includes(wid)){
+                uniqueWids.push(wid);
+                let newFeature = {
+                  geometry: structuredClone(f.geometry),
+                  id: wid,
+                  properties: {
+                    WID: wid,
+                    County: county ? SiteMap.toTitleCase(county): null,
+                    SiteName: siteName
+
+                  },
+                  type: "Feature"
+                };
+                combinedData.features.push(newFeature);
+              }
+              allWidsInLayer.push(wid);
+              if (!uniqueWidsInLayer.includes(wid)){
+                  uniqueWidsInLayer.push(wid);
+              } else {
+                dupWidsInLayer[wid] = allWidsInLayer.filter(w => w ===  wid).length;
+              }
+          });
+          console.log(res.name);
+          console.log(res.data.features.length);
+          console.log("All WIDs in layer");
+          console.log(allWidsInLayer);
+          console.log("Unique WIDs in layer");
+          console.log(uniqueWidsInLayer);
+          console.log("Duplicate WIDs in layer");
+          console.log(dupWidsInLayer);
+          uniqueWidsLayers[res.name] = uniqueWidsInLayer;
+        });
+        console.log("Unique WIDs");
+        console.log(uniqueWids);
+        console.log(uniqueWids.length);
+        console.log("Combined data");
+        console.log(combinedData);
+        console.log(combinedData.features.length);
+        console.log("Missing county");
+        console.log(missingCounty);
+        console.log("Missing WID");
+        console.log(missingWid);
+        //console.log("Dup WIDS");
+        //console.log(dupWids);
+        console.log("Unique WIDs by layer");
+        console.log(uniqueWidsLayers);
+        return combinedData;
+      }
+
+    static toTitleCase(str) {
+      const exceptions = ['of', 'du'];
+      return str
+        .toLowerCase()
+        .split(' ')
+        .map((word, index) => {
+        // If it's an exception and NOT the first word, keep it lowercase
+        if (exceptions.includes(word) && index !== 0) {
+          return word;
+        }
+        // Otherwise, capitalize it
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      })
+      .join(' ');
+    }
+
     //TODO HACK
     getPoint(params) {
       let result = null;
       let cache = this._lookup[SiteMap.getSiteCode(params)];
+      //console.log(cache)
       if (cache) {
         result = cache.point;
       }
@@ -1146,6 +1296,8 @@
     }
 
     updatePoints(activePoints) {
+      console.log("Update points");
+      console.log(activePoints);
       this.map.fire('filterpoints', {
         detail: {
           resolve: (props) => {
@@ -1219,13 +1371,12 @@
     render() {
       let key = 0, value = 1;
       let entries = Object.entries(this.info).filter((el) => {
-        return !ignoredKeys.includes(el[key]);
-      }).filter((el) => {
         return !SiteData.getFieldHidden(el[key], this.context.layoutName);
       }).filter((el) => {
         return !!el[value];
       });
-      entries.sort((a, b) => SiteData.getFieldConfiguration(a[key], this.context.layoutName).sortOrder - SiteData.getFieldConfiguration(b[key], this.context.layoutName).sortOrder);
+      console.log(entries);
+      //entries.sort((a, b) => SiteData.getFieldConfiguration(a[key], this.context.layoutName).sortOrder - SiteData.getFieldConfiguration(b[key], this.context.layoutName).sortOrder);
       entries = entries.map((el, index) => litElement.html`
       <dt class="label" title="${SiteData.getFieldDescription(el[key], this.context.layoutName)}">
         <label for="${this.genId(index)}" >
@@ -1234,7 +1385,7 @@
       </dt>
       <dd class="detail" title="${SiteData.getFieldDescription(el[key], this.context.layoutName)}">
         <span id="${this.genId(index)}">
-          ${el[value]}
+          ${toTitleCase(el[value])}
         </span>
       </dd>
     `);
@@ -1245,6 +1396,18 @@
     `;
     }
   }
+
+  function toTitleCase(val) {
+    if (typeof val === 'string') {
+      return val.replace(
+        /\w\S*/g,
+        text => text.charAt(0).toUpperCase() + text.substring(1).toLowerCase()
+      );
+    } else {
+      return val;
+    }
+  }
+
   customElements.define('table-layout', TableLayout);
 
   /**
@@ -1638,29 +1801,29 @@
     }
 
     renderData(info, layoutName) {
+      console.log(layoutName);
+      console.log(info);
+      
       const layout = layoutResolver.getLayout(layoutName);
       return layout(info, {layoutName, pdfpanel: this.pdfpanel});
     }
 
     render() {
-      let Latitude = (this.siteinfo)?this.siteinfo['Latitude']:null;
-      let Longitude = (this.siteinfo)?this.siteinfo['Longitude']:null;
-      let WID = (this.siteinfo)?this.siteinfo['WID']:null;
+      console.log("Render site details");
+      (this.siteinfo)?this.siteinfo['Latitude']:null;
+      (this.siteinfo)?this.siteinfo['Longitude']:null;
+      (this.siteinfo)?this.siteinfo['WID']:null;
       return litElement.html`
       ${(!this.siteinfo)? '' : litElement.html`
         <div class="header">
           <span>
             <a href="${window.router.link('entry')}" onclick="event.preventDefault()"><i class="material-icons clear-selection" title="Clear selection" @click="${this.fireClearSelection}" >arrow_back</i></a>
           </span>
-          <h1>${this.siteinfo.Site_Name}</h1>
           <span>
             <i class="material-icons zoom-to-site" title="Zoom to site" @click="${this.fireZoomToSite}">my_location</i>
           </span>
         </div>
-        ${this.renderData({
-          Latitude, Longitude, WID
-        })}
-        ${this.siteinfo.datas.slice().reverse().map((props) => litElement.html`
+        ${this.siteinfo.datas.map((props) => litElement.html`
           <app-collapsible open>
             <span slot="header" class="name">${props['Data_Type']}</span>
             <div slot="content">
@@ -1688,6 +1851,10 @@
         counts: {
           type: Array,
           attribute: false
+        },
+        sitesCount: {
+          type: Object,
+          attribute: false
         }
       };
     }
@@ -1711,15 +1878,15 @@
       return (!this.counts)?litElement.html``:litElement.html`
     <div>
       <span>Showing
-        ${this.counts.reduce((prev, count) => (count.current + prev), 0)}
+        ${this.sitesCount.current}
         of
-        ${this.counts.reduce((prev, count) => (count.total + prev), 0)}
+        ${this.sitesCount.total}
         total sites
       </span>
       <ul>
         ${this.counts.reduceRight((prev, el) => prev.concat(litElement.html`
         <li ?disabled=${!el.included}>
-          ${el.current} of ${el.total} <span class="name">${el.name}</span> sites
+          ${el.current} of ${el.total} sites with <span class="name">${el.name}</span> records
           ${(el.filteredBy.length > 0)?litElement.html`
           (filtered by ${el.filteredBy.join(', ')})
           `:''}
@@ -1733,6 +1900,11 @@
     handleFiltered(e) {
       if (e.detail) {
         this.counts = e.detail.counts;
+        this.sitesCount = this.counts.find(count => count.name == "site information");
+        let siteInfoIndex = this.counts.findIndex(count => count.name == "site information");
+        if (siteInfoIndex !== -1) {
+          this.counts.splice(siteInfoIndex, 1);
+        }
       }
     }
 
@@ -1765,6 +1937,10 @@
           attribute: false
         },
         sources: {
+          type: Array,
+          attribute: false
+        },
+        uniqueWidsByLayer: {
           type: Array,
           attribute: false
         }
@@ -1845,7 +2021,15 @@
         ?open=${group.open}>
         <i slot="header-before" class="material-icons collapse-icon"></i>
         <span slot="header">${group.title}</span>
-        ${(!group.toggleable)?'':litElement.html`
+        ${(!group.toggleable)?litElement.html`
+          <toggle-switch
+            name="${group.title}"
+            slot="header-after"
+            ?checked=${group.active}
+            @change=${this._handleGroup(group, 'include')}
+            style="display: none"
+          ></toggle-switch>
+        `:litElement.html`
           <toggle-switch
             name="${group.title}"
             slot="header-after"
@@ -1887,7 +2071,8 @@
           `:''}
         </div>
       </app-collapsible>
-    `);
+    `
+      );   
     }
 
     _handleGroup(group, type) {
@@ -1953,8 +2138,11 @@
         this.include,
         this.filter,
         this.sources,
+        this.uniqueWidsByLayer,
         activePoints
         );
+      console.log("counts:");
+      console.log(counts);
       wgnhsCommon.dispatch(this, 'filtered', {activePoints, counts}, true, true);
     }
 
@@ -1976,7 +2164,7 @@
       }
     }
 
-    init(layers) {
+    init(layers, uniqueWidsByLayer) {
       this.filterGroups.forEach((group) => {
         let source = (group.prop && group[group.prop])?group[group.prop]:undefined;
         group.sections.forEach((section) => {
@@ -1995,6 +2183,7 @@
       });
 
       this.sources = layers;
+      this.uniqueWidsByLayer = uniqueWidsByLayer;
     }
 
     static runFilter({matchClass, incl, filt, sources}) {
@@ -2029,10 +2218,31 @@
         return result;
       }, {});
 
-      return result;
+      let resultArray = [];
+      Object.entries(result).forEach(([k, v]) => {
+        if (k.toLowerCase() !== "site information") {
+          resultArray.push(v);
+        }
+      });
+      console.log(resultArray);
+      const common = resultArray.reduce((acc, currentSet) => acc.union(currentSet), new Set());
+      console.log(common);
+
+      console.log(result);
+      
+      console.log("Common");
+      console.log(common); 
+      const filteredSiteInfo = result['site information'].intersection(common);
+      let filteredResult = {'site information': filteredSiteInfo};
+      Object.entries(result).forEach(([k, v]) => {
+        if (k.toLowerCase() !== "site information") {
+          filteredResult[k] = result['site information'].intersection(v);
+        }
+      });
+      return filteredResult;
     }
 
-    static getResultsInfo(matchClass, include, filter, sources, activePoints) {
+    static getResultsInfo(matchClass, include, filter, sources, uniqueWidsByLayer, activePoints) {
       const result = sources.map((layer) => {
         let stats = {};
         stats.name = layer.options.name;
@@ -2046,11 +2256,13 @@
           return result;
         }, []);
         stats.matchClass = matchClass;
-
+        console.log("layer is:");
+        console.log(layer);
         let entries = Object.entries(layer._layers);
-        stats.total = entries.length;
+        stats.total = layer.options.name === "site information" ? entries.length : uniqueWidsByLayer[layer.options.name].length;
         stats.current = activePoints[layer.options.name].size;
-
+        console.log("stats:");
+        console.log(stats);
         return stats;
       });
       return result;
@@ -2072,6 +2284,7 @@
       this.filterGroups = filterLookup;
     }
   }
+
   customElements.define('map-filter', MapFilter);
 
   const removeFromFilter = (filter, id) => {
@@ -2094,7 +2307,7 @@
 
   window.siteMap.once('init', function() {
     window.siteData = new SiteData(window.siteMap.layers);
-    window.filter.init(window.siteMap.layers);
+    window.filter.init(window.siteMap.layers, window.siteMap.uniqueWidsByLayer);
 
     var deselectFeature = function() {
       window.pdfPanel.hide();
@@ -2203,6 +2416,8 @@
   });
 
   document.addEventListener('zoom-to-site', function(e) {
+    console.log("zoom to site");
+    console.log(e.detail.params);
     window.siteMap.zoomToPoint(e.detail.params);
   });
 
@@ -2222,6 +2437,8 @@
   // });
 
   document.addEventListener('filtered', function(e) {
+    console.log("filtered event");
+    console.log(e.detail.activePoints);
     window.siteMap.updatePoints(e.detail.activePoints);
   });
 
